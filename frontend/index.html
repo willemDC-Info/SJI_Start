@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SJI Starter - Vue + PHP</title>
+    <!--
+      We use Vue from a CDN so students can start coding immediately
+      without installing Node.js tools first.
+    -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        max-width: 700px;
+      }
+      .card {
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      input,
+      button {
+        font-size: 1rem;
+        padding: 0.5rem;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="card">
+      <h1>{{ title }}</h1>
+      <p>{{ message }}</p>
+
+      <!-- Basic input with Vue two-way binding -->
+      <input v-model="newTask" placeholder="Type a task" />
+      <button @click="addTask">Add task</button>
+
+      <h2>Tasks</h2>
+      <ul>
+        <li v-for="task in tasks" :key="task.id">{{ task.text }}</li>
+      </ul>
+
+      <p v-if="error" style="color: #b00020">{{ error }}</p>
+    </div>
+
+    <script>
+      const { createApp } = Vue;
+
+      createApp({
+        data() {
+          return {
+            title: 'SJI Starter Project',
+            message: 'This Vue app talks to a PHP backend.',
+            newTask: '',
+            tasks: [],
+            error: ''
+          };
+        },
+        async mounted() {
+          // mounted() runs when the app is first shown in the browser.
+          await this.loadTasks();
+        },
+        methods: {
+          async loadTasks() {
+            try {
+              const response = await fetch('http://localhost:8000/api.php/tasks');
+              if (!response.ok) {
+                throw new Error('Could not load tasks from backend.');
+              }
+
+              const data = await response.json();
+              this.tasks = data.tasks;
+            } catch (err) {
+              this.error = err.message;
+            }
+          },
+          async addTask() {
+            if (!this.newTask.trim()) {
+              return;
+            }
+
+            try {
+              const response = await fetch('http://localhost:8000/api.php/tasks', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: this.newTask })
+              });
+
+              if (!response.ok) {
+                throw new Error('Could not save task.');
+              }
+
+              const data = await response.json();
+              this.tasks = data.tasks;
+              this.newTask = '';
+            } catch (err) {
+              this.error = err.message;
+            }
+          }
+        }
+      }).mount('#app');
+    </script>
+  </body>
+</html>
